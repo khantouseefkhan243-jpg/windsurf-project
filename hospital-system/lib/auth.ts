@@ -4,8 +4,42 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
 import { UserRole } from "@prisma/client"
+import type { DefaultSession } from "next-auth"
 
-providers: [
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string
+      role: UserRole
+      twoFactorEnabled: boolean
+      patient?: any
+      doctor?: any
+      staff?: any
+    } & DefaultSession["user"]
+  }
+
+  interface User {
+    role: UserRole
+    twoFactorEnabled: boolean
+    patient?: any
+    doctor?: any
+    staff?: any
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    role: UserRole
+    twoFactorEnabled: boolean
+    patient?: any
+    doctor?: any
+    staff?: any
+  }
+}
+
+export const authOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
     CredentialsProvider({
       name: "credentials",
       credentials: {
