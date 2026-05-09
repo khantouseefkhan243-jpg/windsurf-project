@@ -2,6 +2,14 @@
   "name": "hospital-management-system",
   "version": "0.1.0",
   "private": true,
+  "description": "A comprehensive Next.js hospital management system with multi-role support, appointment booking, queue management, and real-time dashboards.",
+  "license": "ISC",
+  "author": "tawseef khan",
+  "type": "commonjs",
+  "main": "next.config.js",
+  "directories": {
+    "lib": "lib"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
