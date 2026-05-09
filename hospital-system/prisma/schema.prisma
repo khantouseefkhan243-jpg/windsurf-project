@@ -1,0 +1,217 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid()) @map("_id")
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole
+  emailVerified DateTime?
+  image         String?
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?
+  backupCodes   String[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  patient       Patient?
+  doctor        Doctor?
+  staff         Staff?
+
+  @@map("users")
+}
+
+model Patient {
+  id          String   @id @default(cuid()) @map("_id")
+  userId      String   @unique
+  dateOfBirth DateTime?
+  gender      String?
+  phone       String?
+  address     String?
+  bloodType   String?
+  allergies   String?
+  emergencyContact String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  medicalRecords MedicalRecord[]
+
+  @@map("patients")
+}
+
+model Doctor {
+  id          String   @id @default(cuid()) @map("_id")
+  userId      String   @unique
+  licenseNo   String   @unique
+  specialization String?
+  experience  Int?     // years
+  education   String?
+  bio         String?
+  consultationFee Float?
+  available   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department  Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+  appointments Appointment[]
+  schedules   DoctorSchedule[]
+  medicalRecords MedicalRecord[]
+
+  @@map("doctors")
+}
+
+model Staff {
+  id          String   @id @default(cuid()) @map("_id")
+  userId      String   @unique
+  employeeId  String   @unique
+  department  String?
+  position    String?
+  hireDate    DateTime?
+  salary      Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("staff")
+}
+
+model Department {
+  id          String   @id @default(cuid()) @map("_id")
+  name        String   @unique
+  description String?
+  headDoctorId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  doctors     Doctor[]
+  headDoctor  Doctor?  @relation("DepartmentHead", fields: [headDoctorId], references: [id])
+
+  @@map("departments")
+}
+
+model Appointment {
+  id           String           @id @default(cuid()) @map("_id")
+  patientId    String
+  doctorId     String
+  departmentId String
+  date         DateTime
+  time         String
+  status       AppointmentStatus @default(SCHEDULED)
+  symptoms     String?
+  notes        String?
+  tokenCode    String?          @unique
+  estimatedWaitMinutes Int?
+  actualStartTime DateTime?
+  actualEndTime DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  patient      Patient          @relation(fields: [patientId], references: [id])
+  doctor       Doctor           @relation(fields: [doctorId], references: [id])
+  department   Department       @relation(fields: [departmentId], references: [id])
+  queue        Queue?
+
+  @@map("appointments")
+}
+
+model Queue {
+  id           String           @id @default(cuid()) @map("_id")
+  appointmentId String          @unique
+  doctorId     String
+  patientId    String
+  status       QueueStatus      @default(WAITING)
+  position     Int?
+  estimatedWaitMinutes Int?
+  joinedAt     DateTime         @default(now())
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  // Relations
+  appointment  Appointment      @relation(fields: [appointmentId], references: [id])
+
+  @@map("queues")
+}
+
+model DoctorSchedule {
+  id          String   @id @default(cuid()) @map("_id")
+  doctorId    String
+  dayOfWeek   Int      // 0-6 (Sunday-Saturday)
+  startTime   String   // "09:00"
+  endTime     String   // "17:00"
+  maxPatients Int      @default(20)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+
+  @@map("doctor_schedules")
+}
+
+model MedicalRecord {
+  id          String   @id @default(cuid()) @map("_id")
+  patientId   String
+  doctorId    String
+  appointmentId String?
+  diagnosis   String?
+  treatment   String?
+  prescription String?
+  notes       String?
+  followUpDate DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  doctor      Doctor   @relation(fields: [doctorId], references: [id])
+
+  @@map("medical_records")
+}
+
+enum UserRole {
+  PATIENT
+  DOCTOR
+  NURSE
+  RECEPTIONIST
+  PHARMACIST
+  LAB_TECHNICIAN
+  ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum QueueStatus {
+  WAITING
+  IN_CONSULTATION
+  COMPLETED
+  CANCELLED
+}
