@@ -1,0 +1,1 @@
+{"/api/appointments/route":"/api/appointments","/api/patient/dashboard-summary/route":"/api/patient/dashboard-summary","/api/queue/[doctorId]/route":"/api/queue/[doctorId]","/api/queue/me/route":"/api/queue/me","/api/doctor/dashboard/route":"/api/doctor/dashboard","/api/auth/[...nextauth]/route":"/api/auth/[...nextauth]"}

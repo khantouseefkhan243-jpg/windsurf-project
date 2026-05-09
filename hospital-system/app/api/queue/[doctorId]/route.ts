@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 import { prisma } from '@/lib/prisma'
 
 export async function GET(
@@ -7,7 +8,7 @@ export async function GET(
   { params }: { params: { doctorId: string } }
 ) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -56,20 +57,20 @@ export async function GET(
 
     // Calculate estimated wait times and update positions
     const queueWithEstimates = await Promise.all(
-      queueItems.map(async (queueItem, index) => {
+      queueItems.map(async (queueItem: any, index: number) => {
         let estimatedWaitMinutes = 0
 
         if (queueItem.status === 'WAITING') {
           // Count patients ahead in queue
           const waitingAhead = queueItems.filter(
-            (item, idx) => 
+            (item: any, idx: number) => 
               item.status === 'WAITING' && 
               idx < index
           ).length
 
           // Average 15 minutes per consultation
           // If there's someone in consultation, add remaining time
-          const inConsultation = queueItems.find(item => item.status === 'IN_CONSULTATION')
+          const inConsultation = queueItems.find((item: any) => item.status === 'IN_CONSULTATION')
           if (inConsultation) {
             // Estimate remaining time based on how long they've been in consultation
             const consultationDuration = inConsultation.startedAt 
@@ -111,7 +112,7 @@ export async function POST(
   { params }: { params: { doctorId: string } }
 ) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

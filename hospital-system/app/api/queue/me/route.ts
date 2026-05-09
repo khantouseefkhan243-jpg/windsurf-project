@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate estimated wait times for waiting patients
     const queueWithEstimates = await Promise.all(
-      queueItems.map(async (queueItem) => {
+      queueItems.map(async (queueItem: any) => {
         if (queueItem.status === 'IN_CONSULTATION') {
           return {
             ...queueItem,

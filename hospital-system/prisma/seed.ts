@@ -1,5 +1,31 @@
-import { PrismaClient, UserRole, AppointmentStatus, QueueStatus } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+
+const UserRole = {
+  PATIENT: 'PATIENT' as const,
+  DOCTOR: 'DOCTOR' as const,
+  NURSE: 'NURSE' as const,
+  RECEPTIONIST: 'RECEPTIONIST' as const,
+  PHARMACIST: 'PHARMACIST' as const,
+  LAB_TECHNICIAN: 'LAB_TECHNICIAN' as const,
+  ADMIN: 'ADMIN' as const
+} as const
+
+const AppointmentStatus = {
+  SCHEDULED: 'SCHEDULED' as const,
+  CONFIRMED: 'CONFIRMED' as const,
+  IN_PROGRESS: 'IN_PROGRESS' as const,
+  COMPLETED: 'COMPLETED' as const,
+  CANCELLED: 'CANCELLED' as const,
+  NO_SHOW: 'NO_SHOW' as const
+} as const
+
+const QueueStatus = {
+  WAITING: 'WAITING' as const,
+  IN_CONSULTATION: 'IN_CONSULTATION' as const,
+  COMPLETED: 'COMPLETED' as const,
+  CANCELLED: 'CANCELLED' as const
+} as const
 
 const prisma = new PrismaClient()
 
@@ -279,7 +305,7 @@ async function main() {
   ])
 
   // Create patient profiles
-  const patients = await Promise.all(patientUsers.map((user, index) =>
+  const patients = await Promise.all(patientUsers.map((user: any, index: number) =>
     prisma.patient.create({
       data: {
         userId: user.id,
@@ -549,7 +575,7 @@ async function main() {
   })
 
   // Create queue entries for today's appointments
-  const queueEntries = allTodayAppointments.map((appointment, index) => {
+  const queueEntries = allTodayAppointments.map((appointment: any, index: number) => {
     // First patient for each doctor is IN_CONSULTATION, others are WAITING
     const isDrSmith = appointment.doctorId === doctors[0].id
     const isFirstForDoctor = 

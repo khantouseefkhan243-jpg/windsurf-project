@@ -1,10 +1,12 @@
 import NextAuth from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
+import { getServerSession } from "next-auth/next"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
-import { UserRole } from "@prisma/client"
 import type { DefaultSession } from "next-auth"
+
+type UserRole = 'PATIENT' | 'DOCTOR' | 'NURSE' | 'RECEPTIONIST' | 'PHARMACIST' | 'LAB_TECHNICIAN' | 'ADMIN'
 
 declare module "next-auth" {
   interface Session {
@@ -89,10 +91,10 @@ export const authOptions = {
     })
   ],
   session: {
-    strategy: "jwt"
+    strategy: "jwt" as const
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.role = user.role
         token.twoFactorEnabled = user.twoFactorEnabled
@@ -102,7 +104,7 @@ export const authOptions = {
       }
       return token
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       if (token) {
         session.user.id = token.sub!
         session.user.role = token.role as UserRole
@@ -121,4 +123,10 @@ export const authOptions = {
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET
 }
 
-export default NextAuth(authOptions)
+const handler = NextAuth(authOptions)
+export { handler as GET, handler as POST }
+export default handler
+
+// Export for API routes
+export const handlers = { GET: handler, POST: handler }
+export const auth = () => getServerSession(authOptions)

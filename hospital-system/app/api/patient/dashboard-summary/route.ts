@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== 'PATIENT') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -169,7 +170,7 @@ export async function GET(request: NextRequest) {
         ]
       })
 
-      const patientPosition = doctorQueue.findIndex(q => q.patientId === patientId)
+      const patientPosition = doctorQueue.findIndex((q: any) => q.patientId === patientId)
       if (patientPosition !== -1) {
         // 15 minutes per consultation
         estimatedWaitTime = patientPosition * 15

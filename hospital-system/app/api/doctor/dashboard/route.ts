@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth()
+    const session = await getServerSession(authOptions)
     
     if (!session || session.user.role !== 'DOCTOR') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -111,13 +112,13 @@ export async function GET(request: NextRequest) {
     ])
 
     // Calculate queue statistics
-    const waitingCount = currentQueue.filter(q => q.status === 'WAITING').length
-    const inConsultationCount = currentQueue.filter(q => q.status === 'IN_CONSULTATION').length
+    const waitingCount = currentQueue.filter((q: any) => q.status === 'WAITING').length
+    const inConsultationCount = currentQueue.filter((q: any) => q.status === 'IN_CONSULTATION').length
 
     // Calculate estimated wait time for next patient
     let estimatedWaitTime = 0
     if (waitingCount > 0) {
-      const nextPatient = currentQueue.find(q => q.status === 'WAITING')
+      const nextPatient = currentQueue.find((q: any) => q.status === 'WAITING')
       if (nextPatient) {
         // Base estimate on position (15 minutes per consultation)
         estimatedWaitTime = waitingCount * 15
